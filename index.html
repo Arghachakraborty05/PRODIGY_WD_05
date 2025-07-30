@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Climo - Live</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+
+<body class="min-h-screen text-white overflow-x-hidden">
+
+
+  <!-- Dynamic Weather Background -->
+  <div id="weatherBackground" class="weather-bg sunny-bg">
+    <div class="sun-rays"></div>
+  </div>
+
+  <div class="relative z-10 container mx-auto px-4 py-8">
+    <!-- Header -->
+    <header class="text-center mb-8">
+      <h1 class="text-5xl font-bold mb-4 flex items-center justify-center gap-4 text-contrast">
+        <i class="ri-cloud-line text-blue-400"></i>
+        Climo - Live
+      </h1>
+      <p class="text-xl text-contrast-light">Track Real-time Weather Forecast</p>
+    </header>
+
+    <!-- Search Section -->
+    <div class="max-w-2xl mx-auto mb-8">
+      <div class="glass rounded-2xl p-6">
+        <div class="flex gap-4 mb-4">
+          <div class="flex-1 relative">
+            <i class="ri-search-line absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70"></i>
+            <input type="text" id="locationInput" placeholder="Enter city name (e.g., London, New York, Tokyo)"
+              class="w-full pl-12 pr-4 py-4 bg-white/20 border-2 border-white/40 rounded-xl text-white placeholder-white/80 focus:outline-none focus:ring-2 focus:ring-blue-400 text-lg font-semibold backdrop-blur-sm"
+              autocomplete="off">
+            <div id="suggestions" class="suggestions-dropdown hidden"></div>
+          </div>
+          <button onclick="searchWeather()"
+            class="px-6 py-4 bg-blue-600/80 hover:bg-blue-700/90 rounded-xl border-2 border-white/40 transition-all duration-300 flex items-center gap-2 text-white font-bold backdrop-blur-sm shadow-lg">
+            <i class="ri-search-line text-xl"></i>
+            Search
+          </button>
+        </div>
+
+        <div class="flex gap-4">
+          <button onclick="getCurrentLocationWeather()"
+            class="flex-1 px-6 py-3 bg-green-600/80 hover:bg-green-700/90 rounded-xl border-2 border-white/40 transition-all duration-300 flex items-center justify-center gap-2 text-white font-bold backdrop-blur-sm shadow-lg">
+            <i class="ri-map-pin-line text-xl"></i>
+            Use My Location
+          </button>
+          <button onclick="toggleUnits()" id="unitToggle"
+            class="px-6 py-3 bg-purple-600/80 hover:bg-purple-700/90 rounded-xl border-2 border-white/40 transition-all duration-300 flex items-center gap-2 text-white font-bold backdrop-blur-sm shadow-lg">
+            <i class="ri-temp-hot-line"></i>
+            °C
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="hidden text-center mb-8">
+      <div class="loading-container rounded-2xl p-8 max-w-md mx-auto">
+        <div class="loading-spinner mx-auto mb-4"></div>
+        <p class="text-xl loading-text">Fetching live weather data...</p>
+        <p class="loading-text-light mt-2" id="loadingSubtext">Connecting to server...</p>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error" class="hidden max-w-md mx-auto mb-8">
+      <div class="error-container rounded-2xl p-6">
+        <div class="flex items-center gap-3">
+          <i class="ri-error-warning-line text-2xl error-text"></i>
+          <div>
+            <p class="font-bold error-text">Weather Data Error</p>
+            <p id="errorMessage" class="text-sm mt-1 error-text-light"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Weather -->
+    <div id="currentWeather" class="hidden max-w-6xl mx-auto mb-8">
+      <div class="glass rounded-3xl p-8">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+          <!-- Main Weather Info -->
+          <div class="text-center lg:text-left">
+            <div class="flex items-center justify-center lg:justify-start gap-3 mb-4">
+              <i class="ri-cloud-line text-2xl text-blue-400"></i>
+              <h2 id="currentLocation" class="text-3xl font-bold text-contrast"></h2>
+            </div>
+
+            <div class="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+              <i class="ri-time-line text-white/90"></i>
+              <p id="currentDate" class="text-contrast-light"></p>
+            </div>
+
+            <div class="flex items-center gap-2 mb-2 justify-center lg:justify-start">
+              <i class="ri-refresh-line text-white/90"></i>
+              <p id="lastUpdated" class="text-contrast-light text-sm"></p>
+            </div>
+
+            <div class="flex items-center gap-2 mb-6 justify-center lg:justify-start">
+              <i class="ri-map-2-line text-white/90"></i>
+              <p id="coordinates" class="text-contrast-light text-sm"></p>
+            </div>
+
+            <div class="flex items-center justify-center lg:justify-start gap-8 mb-6">
+              <div id="currentIcon" class="text-8xl filter drop-shadow-lg"></div>
+              <div>
+                <div id="currentTemp" class="text-7xl font-bold text-contrast"></div>
+                <div id="currentDesc" class="text-2xl capitalize text-contrast"></div>
+                <div id="feelsLike" class="text-lg text-contrast-light mt-2"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weather Details Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-drop-line text-2xl text-blue-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Humidity</div>
+              <div id="humidity" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-windy-line text-2xl text-green-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Wind Speed</div>
+              <div id="windSpeed" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-eye-line text-2xl text-purple-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Visibility</div>
+              <div id="visibility" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-compass-3-line text-2xl text-yellow-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Pressure</div>
+              <div id="pressure" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-sun-line text-2xl text-orange-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">UV Index</div>
+              <div id="uvIndex" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-water-percent-line text-2xl text-cyan-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Dew Point</div>
+              <div id="dewPoint" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-sun-line text-2xl text-orange-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Sunrise</div>
+              <div id="sunrise" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+
+            <div
+              class="glass rounded-xl p-3 text-center min-h-[100px] flex flex-col justify-center items-center overflow-hidden">
+              <i class="ri-moon-line text-2xl text-indigo-300 mb-1 flex-shrink-0"></i>
+              <div class="text-xs text-contrast-light mb-1 truncate w-full">Sunset</div>
+              <div id="sunset" class="text-lg font-bold text-contrast truncate w-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Forecast -->
+    <div id="forecast" class="hidden max-w-7xl mx-auto mb-8">
+      <div class="glass rounded-3xl p-8">
+        <h3 class="text-3xl font-bold mb-6 flex items-center gap-3 text-contrast">
+          <i class="ri-calendar-line text-blue-300"></i>
+          7-Day Weather Forecast
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4" id="forecastContainer">
+          <!-- Forecast cards will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Forecast -->
+    <div id="hourlyForecast" class="hidden max-w-7xl mx-auto mb-8">
+      <div class="glass rounded-3xl p-8">
+        <h3 class="text-3xl font-bold mb-6 flex items-center gap-3 text-contrast">
+          <i class="ri-time-line text-green-300"></i>
+          24-Hour Detailed Forecast
+        </h3>
+        <div class="overflow-x-auto">
+          <div class="flex gap-4 pb-4 min-w-max" id="hourlyContainer">
+            <!-- Hourly cards will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weather Alerts -->
+    <div id="weatherAlerts" class="hidden max-w-4xl mx-auto mb-8">
+      <div class="glass rounded-2xl p-6 border-yellow-500/50">
+        <h3 class="text-xl font-bold mb-4 flex items-center gap-3 text-yellow-300">
+          <i class="ri-alarm-warning-line"></i>
+          Weather Alerts
+        </h3>
+        <div id="alertsContainer"></div>
+      </div>
+    </div>
+
+
+  </div>
+
+
+  <script src="assets/script.js"></script>
+</body>
+
+</html>
